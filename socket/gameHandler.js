@@ -144,6 +144,17 @@ module.exports = (io) => {
                 game.activeTheme = theme;
             }
 
+            // Limpar estado da ronda se o jogo não estiver em ATTACKING
+            // Isto previne que o defensor veja um ataque antigo ao entrar
+            if (game.status !== GameStatus.ATTACKING) {
+                game.currentRound = {
+                    attackerTool: null,
+                    defenderTool: null,
+                    startTime: null,
+                    endTime: null
+                };
+            }
+
             // Se ambos os jogadores conectados, mudar para READY
             if (game.attacker.connected && game.defender.connected && game.status === GameStatus.LOBBY) {
                 game.status = GameStatus.READY;
@@ -335,7 +346,7 @@ module.exports = (io) => {
         });
 
         /**
-         * RESET_GAME - Reiniciar jogo
+         * RESET_GAME - Reiniciar jogo completamente
          */
         socket.on('reset_game', () => {
             if (!currentSessionId) return;
@@ -347,6 +358,34 @@ module.exports = (io) => {
 
             io.to(currentSessionId).emit('game_state', toClientState(freshState));
             io.to(currentSessionId).emit('game_reset');
+        });
+
+        /**
+         * REPLAY_GAME - Jogar novamente mantendo pontuações
+         */
+        socket.on('replay_game', () => {
+            if (!currentSessionId) return;
+
+            const game = games.get(currentSessionId);
+            if (!game) return;
+
+            // Reset da ronda mas manter scores e histórico
+            game.status = GameStatus.READY;
+            game.currentRound = {
+                attackerTool: null,
+                defenderTool: null,
+                startTime: null,
+                endTime: null
+            };
+            game.roundNumber = 0;
+            game.streak = 0;
+            // NÃO resetar: attackerScore, defenderScore, totalRounds, history
+            game.updatedAt = Date.now();
+
+            console.log(`🔄 Replay na sessão ${currentSessionId} (scores: ATK=${game.attackerScore} DEF=${game.defenderScore})`);
+
+            io.to(currentSessionId).emit('game_state', toClientState(game));
+            io.to(currentSessionId).emit('game_replay');
         });
 
         /**
