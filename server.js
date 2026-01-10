@@ -28,6 +28,10 @@ const app = express();
 app.use(cors({
     origin: [
         FRONTEND_URL,
+        // URLs de produção (Vercel)
+        'https://cyber-siege.vercel.app',
+        'https://cyber-siege-server.vercel.app',
+        // URLs de desenvolvimento
         'http://localhost:5173',
         'http://localhost:3000',
         // Permitir qualquer IP local para testes em rede
@@ -62,6 +66,10 @@ const io = new Server(server, {
     cors: {
         origin: [
             FRONTEND_URL,
+            // URLs de produção (Vercel)
+            'https://cyber-siege.vercel.app',
+            'https://cyber-siege-server.vercel.app',
+            // URLs de desenvolvimento
             'http://localhost:5173',
             'http://localhost:3000',
             // Permitir qualquer IP local para testes em rede
